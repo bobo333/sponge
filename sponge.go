@@ -6,6 +6,20 @@ import "fmt"
 import "time"
 import "os"
 
+/*
+   TODO:
+   - parameterize items to get
+   - parameterize output location
+   - general cleanup
+   - other sources
+       - nyt
+       - wash post
+       - wsj
+       - reddit?
+       - techcrunch?
+   - filter Hacker News if no url
+*/
+
 type HackerNewsItem struct {
 	Title string `json:"title"`
 	Url   string `json:"url"`
