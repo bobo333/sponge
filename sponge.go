@@ -121,11 +121,20 @@ type RedditList struct {
 }
 
 func getRedditGolang() []Formatted {
+	redditUsernameEnvName := "REDDIT_USERNAME"
+
+	redditUsername := os.Getenv(redditUsernameEnvName)
+	if redditUsername == "" {
+		fmt.Printf("%s not found!\n", redditUsernameEnvName)
+		return make([]Formatted, 0)
+	}
+	userAgent := fmt.Sprintf("golang Sponge:0.0.1 (by /u/%s)", redditUsername)
+
 	golangListUrl := fmt.Sprintf("https://www.reddit.com/r/golang/top.json?raw_json=1&t=day&limit=%d", itemsToFetch)
 
 	client := &http.Client{Timeout: 10 * time.Second}
 	req, _ := http.NewRequest("GET", golangListUrl, nil)
-	req.Header.Set("User-Agent", "golang Sponge:0.0.1 (by /u/bobo333)") // required or reddit API will return 429 code
+	req.Header.Set("User-Agent", userAgent) // required or reddit API will return 429 code
 	resp, err := client.Do(req)
 	if err != nil {
 		fmt.Println(err)
