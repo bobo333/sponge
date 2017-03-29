@@ -125,7 +125,7 @@ func getRedditGolang() []Formatted {
 
 	redditUsername := os.Getenv(redditUsernameEnvName)
 	if redditUsername == "" {
-		fmt.Printf("%s not found!\n", redditUsernameEnvName)
+		fmt.Printf("Env var %s not found!\n", redditUsernameEnvName)
 		return make([]Formatted, 0)
 	}
 	userAgent := fmt.Sprintf("golang Sponge:0.0.1 (by /u/%s)", redditUsername)
@@ -185,7 +185,7 @@ func getNyt() []Formatted {
 
 	nytApiKey := os.Getenv(apiKeyName)
 	if nytApiKey == "" {
-		fmt.Printf("%s not found!\n", apiKeyName)
+		fmt.Printf("Env var %s not found!\n", apiKeyName)
 		return make([]Formatted, 0)
 	}
 
