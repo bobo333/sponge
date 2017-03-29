@@ -96,10 +96,6 @@ func getHackerNews() []HackerNewsItem {
 	return hnTopItemsDetails
 }
 
-/*
-   Reddit
-*/
-
 func main() {
 
 	hn := getHackerNews()
