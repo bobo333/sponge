@@ -5,6 +5,7 @@ import "encoding/json"
 import "fmt"
 import "time"
 import "os"
+import "sync"
 
 /*
    TODO:
@@ -17,7 +18,18 @@ import "os"
        - wsj
        - reddit?
        - techcrunch?
+       - economist
    - filter Hacker News if no url
+*/
+var itemsToFetch = 10
+var outputLocation = "/tmp/sponge_out.txt"
+
+type formattable interface {
+	Format() string
+}
+
+/*
+   HACKER NEWS
 */
 
 type HackerNewsItem struct {
@@ -29,74 +41,79 @@ func (h HackerNewsItem) Format() string {
 	return fmt.Sprintf("Title: %s\nUrl: %s", h.Title, h.Url)
 }
 
-var hackerNewsListUrl = "https://hacker-news.firebaseio.com/v0/topstories.json"
-var hackerNewsItemUrl = "https://hacker-news.firebaseio.com/v0/item/%d.json"
-var outputLocation = "/tmp/sponge_out.txt"
-
-var itemsToFetch = 10
-
-func main() {
+func getHackerNews() []HackerNewsItem {
+	hackerNewsListUrl := "https://hacker-news.firebaseio.com/v0/topstories.json"
+	hackerNewsItemUrl := "https://hacker-news.firebaseio.com/v0/item/%d.json"
 
 	client := &http.Client{Timeout: 10 * time.Second}
 
 	resp, err := client.Get(hackerNewsListUrl)
 	if err != nil {
 		fmt.Println(err)
+		return make([]HackerNewsItem, 0)
 	}
 	defer resp.Body.Close()
 
-	decoder := json.NewDecoder(resp.Body)
 	hnl := make([]int, 0)
+	decoder := json.NewDecoder(resp.Body)
 	decoder.Decode(&hnl)
 
+	// take only top items (returns 500 initially)
 	hnTopItems := make([]int, itemsToFetch)
 	copy(hnTopItems, hnl[:itemsToFetch])
 
 	hnTopItemsDetails := make([]HackerNewsItem, 0)
-	itemChannel := make(chan HackerNewsItem)
-	receivedChannel := make(chan int)
+
+	var wg sync.WaitGroup
+	wg.Add(itemsToFetch)
 
 	for _, id := range hnTopItems {
 		go func(id int) {
+			defer wg.Done()
+
 			resp, err := client.Get(fmt.Sprintf(hackerNewsItemUrl, id))
 			if err != nil {
 				fmt.Println("error!", err)
+				return
 			}
 			defer resp.Body.Close()
 
 			item := HackerNewsItem{}
-
 			decoder := json.NewDecoder(resp.Body)
 			dec_err := decoder.Decode(&item)
 			if dec_err != nil {
 				print("error!", err)
-			}
+			} else {
+				fmt.Println("appending item")
+				hnTopItemsDetails = append(hnTopItemsDetails, item)
 
-			itemChannel <- item
-			itemNumber := <-receivedChannel
-
-			if itemNumber == itemsToFetch {
-				close(itemChannel)
 			}
 		}(id)
 	}
 
-	itemsReceived := 0
-	for elem := range itemChannel {
-		hnTopItemsDetails = append(hnTopItemsDetails, elem)
-		itemsReceived++
+	wg.Wait()
 
-		receivedChannel <- itemsReceived
-	}
+	return hnTopItemsDetails
+}
+
+/*
+   Reddit
+*/
+
+func main() {
+
+	hn := getHackerNews()
 
 	f, err := os.Create(outputLocation)
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	defer f.Close()
 
-	for _, item := range hnTopItemsDetails {
+	for _, item := range hn {
+		fmt.Println("writing item")
 		f.WriteString(item.Format())
 		f.WriteString("\n\n")
 	}
