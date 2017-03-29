@@ -16,7 +16,11 @@ import "sync"
        - nyt
        - wash post
        - wsj
-       - reddit?
+       - reddit
+            - python
+            - programming
+            - sysadmin
+            - others?
        - techcrunch?
        - economist
    - filter Hacker News if no url
@@ -24,8 +28,8 @@ import "sync"
 var itemsToFetch = 10
 var outputLocation = "/tmp/sponge_out.txt"
 
-type formattable interface {
-	Format() string
+type Formatted struct {
+	Body string
 }
 
 /*
@@ -37,20 +41,20 @@ type HackerNewsItem struct {
 	Url   string `json:"url"`
 }
 
-func (h HackerNewsItem) Format() string {
-	return fmt.Sprintf("Title: %s\nUrl: %s", h.Title, h.Url)
+func (h HackerNewsItem) getFormatted() Formatted {
+	return Formatted{
+		Body: fmt.Sprintf("Title: %s\nUrl: %s", h.Title, h.Url)}
 }
 
-func getHackerNews() []HackerNewsItem {
+func getHackerNews() []Formatted {
 	hackerNewsListUrl := "https://hacker-news.firebaseio.com/v0/topstories.json"
 	hackerNewsItemUrl := "https://hacker-news.firebaseio.com/v0/item/%d.json"
 
 	client := &http.Client{Timeout: 10 * time.Second}
-
 	resp, err := client.Get(hackerNewsListUrl)
 	if err != nil {
 		fmt.Println(err)
-		return make([]HackerNewsItem, 0)
+		return make([]Formatted, 0)
 	}
 	defer resp.Body.Close()
 
@@ -62,7 +66,7 @@ func getHackerNews() []HackerNewsItem {
 	hnTopItems := make([]int, itemsToFetch)
 	copy(hnTopItems, hnl[:itemsToFetch])
 
-	hnTopItemsDetails := make([]HackerNewsItem, 0)
+	hnTopItemsDetails := make([]Formatted, 0)
 
 	var wg sync.WaitGroup
 	wg.Add(itemsToFetch)
@@ -84,8 +88,7 @@ func getHackerNews() []HackerNewsItem {
 			if dec_err != nil {
 				print("error!", err)
 			} else {
-				fmt.Println("appending item")
-				hnTopItemsDetails = append(hnTopItemsDetails, item)
+				hnTopItemsDetails = append(hnTopItemsDetails, item.getFormatted())
 
 			}
 		}(id)
@@ -96,23 +99,92 @@ func getHackerNews() []HackerNewsItem {
 	return hnTopItemsDetails
 }
 
+/*
+   REDDIT GOLANG
+*/
+
+type RedditItem struct {
+	Title string `json:"title"`
+	Url   string `json:"url"`
+}
+
+func (r RedditItem) getFormatted() Formatted {
+	return Formatted{
+		Body: fmt.Sprintf("Title: %s\nUrl: %s", r.Title, r.Url)}
+}
+
+type RedditList struct {
+	Data struct {
+		Children []struct {
+			Data RedditItem `json:"data"`
+		} `json:"children"`
+	} `json:"data"`
+}
+
+func getRedditGolang() []Formatted {
+	golangListUrl := fmt.Sprintf("https://www.reddit.com/r/golang/top.json?raw_json=1&t=day&limit=%d", itemsToFetch)
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, _ := http.NewRequest("GET", golangListUrl, nil)
+	req.Header.Set("User-Agent", "golang Sponge:0.0.1 (by /u/bobo333)") // required or reddit API will return 429 code
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println(err)
+		return make([]Formatted, 0)
+	}
+	if resp.StatusCode != 200 {
+		fmt.Println("Non 200 response", resp.StatusCode)
+		return make([]Formatted, 0)
+	}
+	defer resp.Body.Close()
+
+	redditList := RedditList{}
+	decoder := json.NewDecoder(resp.Body)
+	decodeErr := decoder.Decode(&redditList)
+	if decodeErr != nil {
+		fmt.Println(decodeErr)
+		return make([]Formatted, 0)
+	}
+
+	redditItems := make([]Formatted, itemsToFetch)
+	for i, item := range redditList.Data.Children {
+		redditItems[i] = item.Data.getFormatted()
+	}
+
+	return redditItems
+}
+
+/*
+   File creation
+*/
+
+func writeSection(f *os.File, sectionName string, items []Formatted) {
+	heading := fmt.Sprintf("\n\n=====================================\n"+
+		"%s\n=====================================\n\n", sectionName)
+	f.WriteString(heading)
+
+	for _, item := range items {
+		f.WriteString(item.Body)
+		f.WriteString("\n\n")
+	}
+
+	fmt.Printf("wrote %d %s items\n", len(items), sectionName)
+}
+
 func main() {
 
-	hn := getHackerNews()
+	redditItems := getRedditGolang()
+	hackerNewsItems := getHackerNews()
 
 	f, err := os.Create(outputLocation)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
-
 	defer f.Close()
 
-	for _, item := range hn {
-		fmt.Println("writing item")
-		f.WriteString(item.Format())
-		f.WriteString("\n\n")
-	}
+	writeSection(f, "Reddit Golang", redditItems)
+	writeSection(f, "Hacker News", hackerNewsItems)
 
 	fmt.Printf("Done writing output to %s\n", outputLocation)
 }
