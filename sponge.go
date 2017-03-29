@@ -13,7 +13,6 @@ import "sync"
    - parameterize output location
    - general cleanup
    - other sources
-       - nyt
        - wash post
        - wsj
        - reddit
@@ -155,6 +154,61 @@ func getRedditGolang() []Formatted {
 }
 
 /*
+   NEW YORK TIMES
+*/
+
+type NytItem struct {
+	Title string `json:"title"`
+	Url   string `json:"url"`
+}
+
+func (n NytItem) getFormatted() Formatted {
+	return Formatted{
+		Body: fmt.Sprintf("Title: %s\nUrl: %s", n.Title, n.Url)}
+}
+
+type NytList struct {
+	Results []NytItem `json:"results"`
+}
+
+func getNyt() []Formatted {
+	apiKeyName := "NYT_API_KEY"
+
+	nytApiKey := os.Getenv(apiKeyName)
+	if nytApiKey == "" {
+		fmt.Printf("%s not found!\n", apiKeyName)
+		return make([]Formatted, 0)
+	}
+
+	nytUrl := fmt.Sprintf("https://api.nytimes.com/svc/topstories/v2/home.json?api-key=%s", nytApiKey)
+
+	client := http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(nytUrl)
+
+	if err != nil {
+		fmt.Println(err)
+		return make([]Formatted, 0)
+	}
+	defer resp.Body.Close()
+
+	nytList := NytList{}
+	decoder := json.NewDecoder(resp.Body)
+	decodeErr := decoder.Decode(&nytList)
+	if decodeErr != nil {
+		fmt.Println(err)
+		return make([]Formatted, 0)
+	}
+
+	nytItems := make([]Formatted, itemsToFetch)
+	for i := 0; i < itemsToFetch; i++ {
+		item := nytList.Results[i]
+		nytItems[i] = item.getFormatted()
+	}
+
+	return nytItems
+}
+
+/*
    File creation
 */
 
@@ -175,6 +229,7 @@ func main() {
 
 	redditItems := getRedditGolang()
 	hackerNewsItems := getHackerNews()
+	nytItems := getNyt()
 
 	f, err := os.Create(outputLocation)
 	if err != nil {
@@ -183,8 +238,9 @@ func main() {
 	}
 	defer f.Close()
 
-	writeSection(f, "Reddit Golang", redditItems)
+	writeSection(f, "New York Times", nytItems)
 	writeSection(f, "Hacker News", hackerNewsItems)
+	writeSection(f, "Reddit Golang", redditItems)
 
 	fmt.Printf("Done writing output to %s\n", outputLocation)
 }
