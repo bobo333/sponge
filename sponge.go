@@ -1,17 +1,20 @@
 package main
 
-import "net/http"
-import "encoding/json"
-import "fmt"
-import "time"
-import "os"
-import "sync"
+import (
+	"encoding/json"
+	"errors"
+	"flag"
+	"fmt"
+	"net/http"
+	"os"
+	"path/filepath"
+	"sync"
+	"time"
+)
 
 /*
    TODO:
-   - parameterize items to get
-   - parameterize output location
-   - general cleanup
+   - make submodules
    - other sources
        - wash post
        - wsj
@@ -24,11 +27,36 @@ import "sync"
        - economist
    - filter Hacker News if no url
 */
-var itemsToFetch = 10
-var outputLocation = "/tmp/sponge_out.txt"
+
+var defaultOutput = filepath.Join(os.TempDir(), "sponge_out.txt")
+var itemsToFetch = flag.Int("count", 10, "Number of items to fetch from each source")
+var outputLocation = flag.String("out", defaultOutput, "Output file")
 
 type Formatted struct {
 	Body string
+}
+
+func getJsonResponse(url string, v interface{}) error {
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(url)
+	if err != nil {
+		return err
+	}
+
+	decoder := json.NewDecoder(resp.Body)
+	if decErr := decoder.Decode(v); decErr != nil {
+		return decErr
+	}
+
+	return nil
+}
+
+func getEnvVar(varName string) (string, error) {
+	envVarValue := os.Getenv(varName)
+	if envVarValue == "" {
+		return "", errors.New(fmt.Sprintf("Env var %s not found", varName))
+	}
+	return envVarValue, nil
 }
 
 /*
@@ -45,57 +73,48 @@ func (h HackerNewsItem) getFormatted() Formatted {
 		Body: fmt.Sprintf("Title: %s\nUrl: %s", h.Title, h.Url)}
 }
 
-func getHackerNews() []Formatted {
+func getHackerNews() ([]Formatted, error) {
 	hackerNewsListUrl := "https://hacker-news.firebaseio.com/v0/topstories.json"
 	hackerNewsItemUrl := "https://hacker-news.firebaseio.com/v0/item/%d.json"
 
-	client := &http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(hackerNewsListUrl)
-	if err != nil {
-		fmt.Println(err)
-		return make([]Formatted, 0)
-	}
-	defer resp.Body.Close()
-
-	hnl := make([]int, 0)
-	decoder := json.NewDecoder(resp.Body)
-	decoder.Decode(&hnl)
+	var hnl []int
+	getJsonResponse(hackerNewsListUrl, &hnl)
 
 	// take only top items (returns 500 initially)
-	hnTopItems := make([]int, itemsToFetch)
-	copy(hnTopItems, hnl[:itemsToFetch])
-
-	hnTopItemsDetails := make([]Formatted, 0)
+	var hnTopItems []int
+	hnTopItems = append(hnTopItems, hnl[:*itemsToFetch]...)
+	var hnTopItemsDetails []Formatted
+	collectorChan := make(chan Formatted)
 
 	var wg sync.WaitGroup
-	wg.Add(itemsToFetch)
+	wg.Add(len(hnTopItems))
+
+	go func() {
+		wg.Wait()
+		close(collectorChan)
+	}()
 
 	for _, id := range hnTopItems {
-		go func(id int) {
+		id := id // need this or will only use LAST value of id for all goroutines
+		go func() {
 			defer wg.Done()
 
-			resp, err := client.Get(fmt.Sprintf(hackerNewsItemUrl, id))
-			if err != nil {
-				fmt.Println("error!", err)
-				return
-			}
-			defer resp.Body.Close()
-
+			hnItemUrl := fmt.Sprintf(hackerNewsItemUrl, id)
 			item := HackerNewsItem{}
-			decoder := json.NewDecoder(resp.Body)
-			dec_err := decoder.Decode(&item)
-			if dec_err != nil {
-				print("error!", err)
+			err := getJsonResponse(hnItemUrl, &item)
+			if err != nil {
+				fmt.Printf("%#v\n", err)
 			} else {
-				hnTopItemsDetails = append(hnTopItemsDetails, item.getFormatted())
-
+				collectorChan <- item.getFormatted()
 			}
-		}(id)
+		}()
 	}
 
-	wg.Wait()
+	for item := range collectorChan {
+		hnTopItemsDetails = append(hnTopItemsDetails, item)
+	}
 
-	return hnTopItemsDetails
+	return hnTopItemsDetails, nil
 }
 
 /*
@@ -120,46 +139,41 @@ type RedditList struct {
 	} `json:"data"`
 }
 
-func getRedditGolang() []Formatted {
+func getRedditGolang() ([]Formatted, error) {
 	redditUsernameEnvName := "REDDIT_USERNAME"
-
-	redditUsername := os.Getenv(redditUsernameEnvName)
-	if redditUsername == "" {
-		fmt.Printf("Env var %s not found!\n", redditUsernameEnvName)
-		return make([]Formatted, 0)
+	redditUsername, envVarErr := getEnvVar(redditUsernameEnvName)
+	if envVarErr != nil {
+		return nil, envVarErr
 	}
+
 	userAgent := fmt.Sprintf("golang Sponge:0.0.1 (by /u/%s)", redditUsername)
+	golangListUrl := fmt.Sprintf("https://www.reddit.com/r/golang/top.json?raw_json=1&t=day&limit=%d", *itemsToFetch)
 
-	golangListUrl := fmt.Sprintf("https://www.reddit.com/r/golang/top.json?raw_json=1&t=day&limit=%d", itemsToFetch)
-
+	// TODO: factor out client and json parsing
 	client := &http.Client{Timeout: 10 * time.Second}
 	req, _ := http.NewRequest("GET", golangListUrl, nil)
 	req.Header.Set("User-Agent", userAgent) // required or reddit API will return 429 code
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
-		return make([]Formatted, 0)
+		return nil, err
 	}
 	if resp.StatusCode != 200 {
-		fmt.Println("Non 200 response", resp.StatusCode)
-		return make([]Formatted, 0)
+		return nil, errors.New(fmt.Sprintf("Non 200 response %d", resp.StatusCode))
 	}
 	defer resp.Body.Close()
 
 	redditList := RedditList{}
 	decoder := json.NewDecoder(resp.Body)
-	decodeErr := decoder.Decode(&redditList)
-	if decodeErr != nil {
-		fmt.Println(decodeErr)
-		return make([]Formatted, 0)
+	if decodeErr := decoder.Decode(&redditList); decodeErr != nil {
+		return nil, decodeErr
 	}
 
-	redditItems := make([]Formatted, itemsToFetch)
-	for i, item := range redditList.Data.Children {
-		redditItems[i] = item.Data.getFormatted()
+	var redditItems []Formatted
+	for _, item := range redditList.Data.Children {
+		redditItems = append(redditItems, item.Data.getFormatted())
 	}
 
-	return redditItems
+	return redditItems, nil
 }
 
 /*
@@ -180,76 +194,96 @@ type NytList struct {
 	Results []NytItem `json:"results"`
 }
 
-func getNyt() []Formatted {
-	apiKeyName := "NYT_API_KEY"
-
-	nytApiKey := os.Getenv(apiKeyName)
-	if nytApiKey == "" {
-		fmt.Printf("Env var %s not found!\n", apiKeyName)
-		return make([]Formatted, 0)
+func getNyt() ([]Formatted, error) {
+	nytApiKey, apiKeyErr := getEnvVar("NYT_API_KEY")
+	if apiKeyErr != nil {
+		return nil, apiKeyErr
 	}
 
 	nytUrl := fmt.Sprintf("https://api.nytimes.com/svc/topstories/v2/home.json?api-key=%s", nytApiKey)
-
-	client := http.Client{Timeout: 10 * time.Second}
-	resp, err := client.Get(nytUrl)
-
-	if err != nil {
-		fmt.Println(err)
-		return make([]Formatted, 0)
-	}
-	defer resp.Body.Close()
-
 	nytList := NytList{}
-	decoder := json.NewDecoder(resp.Body)
-	decodeErr := decoder.Decode(&nytList)
-	if decodeErr != nil {
-		fmt.Println(err)
-		return make([]Formatted, 0)
+	err := getJsonResponse(nytUrl, &nytList)
+	if err != nil {
+		return nil, err
 	}
 
-	nytItems := make([]Formatted, itemsToFetch)
-	for i := 0; i < itemsToFetch; i++ {
+	var nytItems []Formatted
+	for i := 0; i < *itemsToFetch; i++ {
 		item := nytList.Results[i]
-		nytItems[i] = item.getFormatted()
+		nytItems = append(nytItems, item.getFormatted())
 	}
 
-	return nytItems
+	return nytItems, nil
 }
 
 /*
    File creation
 */
 
-func writeSection(f *os.File, sectionName string, items []Formatted) {
+func writeSection(f *os.File, section outputSection) {
 	heading := fmt.Sprintf("\n\n=====================================\n"+
-		"%s\n=====================================\n\n", sectionName)
+		"%s\n=====================================\n\n", section.Name)
 	f.WriteString(heading)
 
-	for _, item := range items {
+	for _, item := range section.Data {
 		f.WriteString(item.Body)
 		f.WriteString("\n\n")
 	}
 
-	fmt.Printf("wrote %d %s items\n", len(items), sectionName)
+	fmt.Printf("wrote %d %s items\n", len(section.Data), section.Name)
+}
+
+type outputSection struct {
+	Name string
+	Data []Formatted
 }
 
 func main() {
+	flag.Parse()
 
-	redditItems := getRedditGolang()
-	hackerNewsItems := getHackerNews()
-	nytItems := getNyt()
+	mappings := map[string]func() ([]Formatted, error){
+		"Hacker News":    getHackerNews,
+		"Reddit Golang":  getRedditGolang,
+		"New York Times": getNyt,
+	}
 
-	f, err := os.Create(outputLocation)
+	var wg sync.WaitGroup
+	wg.Add(3)
+	receiverChannel := make(chan outputSection)
+
+	go func() {
+		wg.Wait()
+		close(receiverChannel)
+	}()
+
+	for name, fxn := range mappings {
+		name := name
+		fxn := fxn
+
+		go func() {
+			defer wg.Done()
+
+			itemsList, err := fxn()
+			if err != nil {
+				fmt.Println(fmt.Sprintf("%s error: ", name), err)
+			} else {
+				receiverChannel <- outputSection{
+					Name: name,
+					Data: itemsList}
+			}
+		}()
+	}
+
+	f, err := os.Create(*outputLocation)
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 	defer f.Close()
 
-	writeSection(f, "New York Times", nytItems)
-	writeSection(f, "Hacker News", hackerNewsItems)
-	writeSection(f, "Reddit Golang", redditItems)
+	for section := range receiverChannel {
+		writeSection(f, section)
+	}
 
-	fmt.Printf("Done writing output to %s\n", outputLocation)
+	fmt.Printf("Done writing output to %s\n", *outputLocation)
 }
