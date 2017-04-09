@@ -22,11 +22,6 @@ import (
    - other sources
        - wash post
        - wsj
-       - reddit
-            - python
-            - programming
-            - sysadmin
-            - others?
        - techcrunch?
        - economist
    - filter Hacker News if no url
@@ -185,7 +180,7 @@ type RedditList struct {
 	} `json:"data"`
 }
 
-func getRedditGolang(numItems int) (outputSection, error) {
+func getReddit(subName string, numItems int) (outputSection, error) {
 	redditUsernameEnvName := "REDDIT_USERNAME"
 	redditUsername, envVarErr := getEnvVar(redditUsernameEnvName)
 	if envVarErr != nil {
@@ -193,7 +188,7 @@ func getRedditGolang(numItems int) (outputSection, error) {
 	}
 
 	userAgent := fmt.Sprintf("golang Sponge:0.0.1 (by /u/%s)", redditUsername)
-	golangListUrl := fmt.Sprintf("https://www.reddit.com/r/golang/top.json?raw_json=1&t=day&limit=%d", numItems)
+	golangListUrl := fmt.Sprintf("https://www.reddit.com/r/%s/top.json?raw_json=1&t=day&limit=%d", subName, numItems)
 
 	// TODO: factor out client and json parsing
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -220,7 +215,7 @@ func getRedditGolang(numItems int) (outputSection, error) {
 	}
 
 	output := outputSection{
-		Name:  "Reddit r/Golang",
+		Name:  fmt.Sprintf("Reddit r/%s", subName),
 		Items: redditItems}
 
 	return output, nil
@@ -279,7 +274,7 @@ func createRawText(sections []outputSection) string {
 
 	for _, section := range sections {
 		rawText += section.toText()
-		fmt.Printf("Formatted %d items in text form\n", len(section.Items))
+		fmt.Printf("Formatted %d %s items in text form\n", len(section.Items), section.Name)
 	}
 
 	return rawText
@@ -437,8 +432,15 @@ func main() {
 
 	sectionsToGet := []func(int) (outputSection, error){
 		getHackerNews,
-		getRedditGolang,
 		getNyt,
+	}
+
+	subredditsToGet := []string{
+		"golang",
+		"python",
+		"sysadmin",
+		"programming",
+		"liverpoolfc",
 	}
 
 	var wg sync.WaitGroup
@@ -457,6 +459,22 @@ func main() {
 			defer wg.Done()
 
 			output, err := fxn(*numItems)
+			if err != nil {
+				fmt.Printf("%s\n", err)
+			} else {
+				receiverChannel <- output
+			}
+		}()
+	}
+
+	for _, subName := range subredditsToGet {
+		wg.Add(1)
+		subName := subName
+
+		go func() {
+			defer wg.Done()
+
+			output, err := getReddit(subName, *numItems)
 			if err != nil {
 				fmt.Printf("%s\n", err)
 			} else {
