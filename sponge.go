@@ -326,11 +326,14 @@ func writeToEmail(emailAddress string, text string, textOutput bool) {
 	baseUrl := "https://api.mailgun.net/v3"
 	email_url := fmt.Sprintf("%s/%s/messages", baseUrl, mailgunDomain)
 
+	date := time.Now().Format("2006/01/02")
+	subject := fmt.Sprintf("Sponge %s", date)
+
 	// add fields to form (including email body)
 	form := url.Values{}
 	form.Add("to", emailAddress)
 	form.Add("from", "sponge@stevencipriano.com")
-	form.Add("subject", "Sponge [date]")
+	form.Add("subject", subject)
 	form.Add(fieldName, text)
 
 	req, reqErr := http.NewRequest(http.MethodPost, email_url, strings.NewReader(form.Encode()))
@@ -359,8 +362,13 @@ func writeToEmail(emailAddress string, text string, textOutput bool) {
 
 	if bodyErr != nil {
 		fmt.Println(bodyErr)
-	} else {
+		return
+	}
+
+	if resp.StatusCode != 200 {
+		fmt.Println("Status code:", resp.StatusCode)
 		fmt.Println(string(body))
+		return
 	}
 
 	fmt.Printf("Done sending email to %s\n", emailAddress)
