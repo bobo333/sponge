@@ -446,11 +446,6 @@ func main() {
 	var wg sync.WaitGroup
 	receiverChannel := make(chan outputSection)
 
-	go func() {
-		wg.Wait()
-		close(receiverChannel)
-	}()
-
 	for _, fxn := range sectionsToGet {
 		wg.Add(1)
 		fxn := fxn
@@ -482,6 +477,11 @@ func main() {
 			}
 		}()
 	}
+
+	go func() {
+		wg.Wait()
+		close(receiverChannel)
+	}()
 
 	var sections []outputSection
 	for section := range receiverChannel {
