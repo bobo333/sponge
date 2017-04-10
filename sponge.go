@@ -12,13 +12,8 @@ import (
 
 /*
    TODO:
-   - documentation / godocs
-   - better env var inits and checks
-   - other sources
-       - wash post
-       - wsj
-       - techcrunch?
-       - economist
+   - godocs
+   - better env var inits and checks?
    - filter Hacker News if no url
 */
 
@@ -31,9 +26,16 @@ func main() {
 
 	flag.Parse()
 
+	newsApiSources := []string{
+		"the-new-york-times",
+		"the-wall-street-journal",
+		"the-washington-post",
+		"the-economist",
+		"techcrunch",
+	}
+
 	sectionsToGet := []func(int) (shared.OutputSection, error){
 		sources.GetHackerNews,
-		sources.GetNyt,
 	}
 
 	subredditsToGet := []string{
@@ -46,6 +48,22 @@ func main() {
 
 	var wg sync.WaitGroup
 	receiverChannel := make(chan shared.OutputSection)
+
+	for _, newsApiSource := range newsApiSources {
+		wg.Add(1)
+		newsApiSource := newsApiSource
+
+		go func() {
+			defer wg.Done()
+
+			output, err := sources.GetNewsApiItems(newsApiSource, *numItems)
+			if err != nil {
+				fmt.Printf("%s\n", err)
+			} else {
+				receiverChannel <- output
+			}
+		}()
+	}
 
 	for _, fxn := range sectionsToGet {
 		wg.Add(1)
