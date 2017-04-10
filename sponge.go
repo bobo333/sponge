@@ -14,6 +14,7 @@ import (
    TODO:
    - tests
    - godocs
+   - golint
    - better env var inits and checks?
    - filter Hacker News if no url
 */
