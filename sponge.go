@@ -12,6 +12,7 @@ import (
 
 /*
    TODO:
+   - tests
    - godocs
    - better env var inits and checks?
    - filter Hacker News if no url
