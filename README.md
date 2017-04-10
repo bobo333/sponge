@@ -37,7 +37,7 @@ Required environment variables:
 
 ### Options
 
-See `[GOPATH]/bin/sponge --help` for details.
+Run `[GOPATH]/bin/sponge --help` for details.
 
 - Supports emailing output to address instead of writing to file. Requires additional environment vars:
     - `MAILGUN_API_KEY`
