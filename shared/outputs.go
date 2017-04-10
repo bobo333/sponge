@@ -46,13 +46,13 @@ func WriteToEmail(emailAddress string, text string, textOutput bool) {
 	// get key env var
 	key, err1 := GetEnvVar("MAILGUN_API_KEY")
 	if err1 != nil {
-		fmt.Printf("%#v", err1)
+		fmt.Printf("%#v\n", err1)
 		return
 	}
 
 	mailgunDomain, err2 := GetEnvVar("MAILGUN_DOMAIN")
 	if err2 != nil {
-		fmt.Printf("%#v, err2")
+		fmt.Printf("%#v\n", err2)
 		return
 	}
 
