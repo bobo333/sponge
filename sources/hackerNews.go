@@ -10,19 +10,21 @@ import (
    HACKER NEWS
 */
 
-type HackerNewsItem struct {
+type hackerNewsItem struct {
 	Title string `json:"title"`
 	Url   string `json:"url"`
 	Id    int    `json:"id"`
 }
 
-func (h HackerNewsItem) standardize() shared.StandardizedItem {
+func (h hackerNewsItem) standardize() shared.StandardizedItem {
 	return shared.StandardizedItem{
 		Title:    h.Title,
 		Url:      h.Url,
 		Comments: fmt.Sprintf("https://news.ycombinator.com/item?id=%d", h.Id)}
 }
 
+// GetHackerNews gets *numItems* Hacker News items, standardizes them, and
+// compiles them into shared.OutputSection.
 func GetHackerNews(numItems int) (shared.OutputSection, error) {
 	hackerNewsListUrl := "https://hacker-news.firebaseio.com/v0/topstories.json"
 	hackerNewsItemUrl := "https://hacker-news.firebaseio.com/v0/item/%d.json"
@@ -50,7 +52,7 @@ func GetHackerNews(numItems int) (shared.OutputSection, error) {
 			defer wg.Done()
 
 			hnItemUrl := fmt.Sprintf(hackerNewsItemUrl, id)
-			item := HackerNewsItem{}
+			item := hackerNewsItem{}
 			err := shared.GetJsonResponse(hnItemUrl, &item)
 			if err != nil {
 				fmt.Printf("%#v\n", err)
