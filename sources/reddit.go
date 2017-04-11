@@ -2,34 +2,35 @@ package sources
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	shared "github.com/bobo333/sponge/shared"
 	"net/http"
 	"time"
 )
 
-type RedditItem struct {
+type redditItem struct {
 	Title     string `json:"title"`
 	Url       string `json:"url"`
 	Permalink string `json:"permalink"`
 }
 
-func (r RedditItem) standardize() shared.StandardizedItem {
+func (r redditItem) standardize() shared.StandardizedItem {
 	return shared.StandardizedItem{
 		Title:    r.Title,
 		Url:      r.Url,
 		Comments: fmt.Sprintf("https://reddit.com%s", r.Permalink)}
 }
 
-type RedditList struct {
+type redditList struct {
 	Data struct {
 		Children []struct {
-			Data RedditItem `json:"data"`
+			Data redditItem `json:"data"`
 		} `json:"children"`
 	} `json:"data"`
 }
 
+// GetReddit retrieves *numItems* from *subName* subreddit, standardizes them,
+// and compiles them into shared.OutputSection.
 func GetReddit(subName string, numItems int) (shared.OutputSection, error) {
 	redditUsernameEnvName := "REDDIT_USERNAME"
 	redditUsername, envVarErr := shared.GetEnvVar(redditUsernameEnvName)
@@ -49,11 +50,11 @@ func GetReddit(subName string, numItems int) (shared.OutputSection, error) {
 		return shared.OutputSection{}, err
 	}
 	if resp.StatusCode != 200 {
-		return shared.OutputSection{}, errors.New(fmt.Sprintf("Non 200 response %d", resp.StatusCode))
+		return shared.OutputSection{}, fmt.Errorf("Non 200 response %d", resp.StatusCode)
 	}
 	defer resp.Body.Close()
 
-	redditList := RedditList{}
+	redditList := redditList{}
 	decoder := json.NewDecoder(resp.Body)
 	if decodeErr := decoder.Decode(&redditList); decodeErr != nil {
 		return shared.OutputSection{}, decodeErr

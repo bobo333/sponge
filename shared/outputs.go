@@ -10,9 +10,10 @@ import (
 	"time"
 )
 
-/*
-   File creation
-*/
+// WriteToFile creates a file at *outputFilePath* and writes the provided
+// *text* to that file. If *textOutput* is true, the *text* is assumed to be
+// plain text, and the file extension will be ".txt". Otherwise it is assumed
+// to be html and the extension will be ".html"
 func WriteToFile(outputFilePath, text string, textOutput bool) {
 	extension := "html"
 	if textOutput {
@@ -34,9 +35,9 @@ func WriteToFile(outputFilePath, text string, textOutput bool) {
 	fmt.Printf("Done writing output to %s\n", outputFilePath)
 }
 
-/*
-   Email creation
-*/
+// WriteToEmail takes the given *text* and sends it to *emailAddress* via
+// the Mailgun API. If *textOutput* is true, the email is sent as plaintext.
+// If *textOutput* is false, the email is sent as html.
 func WriteToEmail(emailAddress string, text string, textOutput bool) {
 	fieldName := "html"
 	if textOutput {

@@ -5,24 +5,26 @@ import (
 	shared "github.com/bobo333/sponge/shared"
 )
 
-type NewsApiItem struct {
+type newsApiItem struct {
 	Title string `json:"title"`
 	Url   string `json:"url"`
 }
 
-func (n *NewsApiItem) standardize() shared.StandardizedItem {
+func (n *newsApiItem) standardize() shared.StandardizedItem {
 	return shared.StandardizedItem{
 		Title: n.Title,
 		Url:   n.Url,
 	}
 }
 
-type NewsApiResponse struct {
+type newsApiResponse struct {
 	Status   string        `json:"status"`
 	Message  string        `json:"message"`
-	Articles []NewsApiItem `json:"articles"`
+	Articles []newsApiItem `json:"articles"`
 }
 
+// GetNewsApiItems retrieves *numItems* of *newsSource* type from NewsApi,
+// standardizes them, and compiles them into shared.OutputSection
 func GetNewsApiItems(newsSource string, numItems int) (shared.OutputSection, error) {
 	newsApiKey, newsApiKeyErr := shared.GetEnvVar("NEWS_API_KEY")
 	if newsApiKeyErr != nil {
@@ -30,7 +32,7 @@ func GetNewsApiItems(newsSource string, numItems int) (shared.OutputSection, err
 	}
 
 	newsApiUrl := fmt.Sprintf("https://newsapi.org/v1/articles?source=%s&apiKey=%s&sortBy=top", newsSource, newsApiKey)
-	apiResponse := NewsApiResponse{}
+	apiResponse := newsApiResponse{}
 	err := shared.GetJsonResponse(newsApiUrl, &apiResponse)
 	if err != nil {
 		return shared.OutputSection{}, err
