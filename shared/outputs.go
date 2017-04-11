@@ -58,7 +58,7 @@ func WriteToEmail(emailAddress string, text string, textOutput bool) {
 	}
 
 	baseUrl := "https://api.mailgun.net/v3"
-	email_url := fmt.Sprintf("%s/%s/messages", baseUrl, mailgunDomain)
+	emailUrl := fmt.Sprintf("%s/%s/messages", baseUrl, mailgunDomain)
 
 	date := time.Now().Format("2006/01/02")
 	subject := fmt.Sprintf("Sponge %s", date)
@@ -70,7 +70,7 @@ func WriteToEmail(emailAddress string, text string, textOutput bool) {
 	form.Add("subject", subject)
 	form.Add(fieldName, text)
 
-	req, reqErr := http.NewRequest(http.MethodPost, email_url, strings.NewReader(form.Encode()))
+	req, reqErr := http.NewRequest(http.MethodPost, emailUrl, strings.NewReader(form.Encode()))
 	if reqErr != nil {
 		fmt.Printf("%#v", reqErr)
 		return
