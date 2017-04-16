@@ -2,8 +2,9 @@ package sources_test
 
 import "fmt"
 import "io/ioutil"
-import shared "github.com/bobo333/sponge/shared"
-import sources "github.com/bobo333/sponge/sources"
+import "github.com/bobo333/sponge/shared"
+import "github.com/bobo333/sponge/sources"
+import "github.com/stretchr/testify/assert"
 import "net/http"
 import "net/http/httptest"
 import "os"
@@ -64,18 +65,11 @@ func TestSubredditUrlMaker(t *testing.T) {
 
 func verifyOutputItems(outputSection shared.OutputSection,
 	expectedValues []map[string]string, t *testing.T) {
+
+	assert := assert.New(t)
 	for i, item := range outputSection.Items {
-		title, expectedTitle := item.Title, expectedValues[i]["title"]
-		if title != expectedTitle {
-			t.Errorf("expected title to be %s, got %s", expectedTitle, title)
-		}
-		url, expectedUrl := item.Url, expectedValues[i]["url"]
-		if url != expectedUrl {
-			t.Errorf("expected url to be %s, got %s", expectedUrl, url)
-		}
-		comments, expectedComments := item.Comments, expectedValues[i]["comments"]
-		if comments != expectedComments {
-			t.Errorf("expected comments to be %s, got %s", expectedComments, comments)
-		}
+		assert.Equal(item.Title, expectedValues[i]["title"], "incorrect title")
+		assert.Equal(item.Url, expectedValues[i]["url"], "incorrect url")
+		assert.Equal(item.Comments, expectedValues[i]["comments"], "incorrect comments")
 	}
 }

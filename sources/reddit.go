@@ -3,7 +3,7 @@ package sources
 import (
 	"encoding/json"
 	"fmt"
-	shared "github.com/bobo333/sponge/shared"
+	"github.com/bobo333/sponge/shared"
 	"net/http"
 	"time"
 )

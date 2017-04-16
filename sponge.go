@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	shared "github.com/bobo333/sponge/shared"
-	sources "github.com/bobo333/sponge/sources"
+	"github.com/bobo333/sponge/shared"
+	"github.com/bobo333/sponge/sources"
 	"os"
 	"path/filepath"
 	"sync"

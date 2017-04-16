@@ -2,7 +2,7 @@ package shared_test
 
 import "fmt"
 import "os"
-import shared "github.com/bobo333/sponge/shared"
+import "github.com/bobo333/sponge/shared"
 import "testing"
 
 func TestGetEnvVar(t *testing.T) {
