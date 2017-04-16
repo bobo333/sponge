@@ -48,7 +48,18 @@ func TestGetReddit(t *testing.T) {
 			"comments": "https://reddit.com/r/Python/comments/65mxbw/minimal_and_clean_examples_of_data_structures_and/"}}
 
 	verifyOutputItems(outputSection, expectedValues, t)
+}
 
+func TestSubredditUrlMaker(t *testing.T) {
+	subName := "a_subreddit"
+	numItems := 5
+
+	expectedUrl := fmt.Sprintf("https://www.reddit.com/r/%s/top.json?raw_json=1&t=day&limit=%d", subName, numItems)
+	actualUrl := sources.SubredditUrlMaker(subName, numItems)
+
+	if actualUrl != expectedUrl {
+		t.Errorf("expected url %s got %s", expectedUrl, actualUrl)
+	}
 }
 
 func verifyOutputItems(outputSection shared.OutputSection,
