@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+// TODO: use templates
+
 /*
    Utility functions
 */

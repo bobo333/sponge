@@ -87,7 +87,7 @@ func main() {
 		go func() {
 			defer wg.Done()
 
-			output, err := sources.GetReddit(subName, *numItems)
+			output, err := sources.GetReddit(subName, *numItems, sources.SubredditUrlMaker)
 			if err != nil {
 				fmt.Printf("%s\n", err)
 			} else {
