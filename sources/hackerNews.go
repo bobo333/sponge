@@ -2,7 +2,7 @@ package sources
 
 import (
 	"fmt"
-	shared "github.com/bobo333/sponge/shared"
+	"github.com/bobo333/sponge/shared"
 	"sync"
 )
 

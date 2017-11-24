@@ -3,8 +3,8 @@ package main
 import (
 	"flag"
 	"fmt"
-	shared "github.com/bobo333/sponge/shared"
-	sources "github.com/bobo333/sponge/sources"
+	"github.com/bobo333/sponge/shared"
+	"github.com/bobo333/sponge/sources"
 	"os"
 	"path/filepath"
 	"sync"
@@ -87,7 +87,7 @@ func main() {
 		go func() {
 			defer wg.Done()
 
-			output, err := sources.GetReddit(subName, *numItems)
+			output, err := sources.GetReddit(subName, *numItems, sources.SubredditUrlMaker)
 			if err != nil {
 				fmt.Printf("%s\n", err)
 			} else {

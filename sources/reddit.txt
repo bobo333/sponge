@@ -1,0 +1,160 @@
+{
+  "kind": "Listing",
+  "data": {
+    "modhash": "rg2kdbw3bf82e0611a766f9e17cb86493e6871ca743f2486f1",
+    "children": [
+      {
+        "kind": "t3",
+        "data": {
+          "contest_mode": false,
+          "banned_by": null,
+          "media_embed": {},
+          "subreddit": "Python",
+          "selftext_html": "&lt;!-- SC_OFF --&gt;&lt;div class=\"md\"&gt;&lt;p&gt;You&amp;#39;ll probably want to include some kind of general location information here.&lt;/p&gt;\n&lt;/div&gt;&lt;!-- SC_ON --&gt;",
+          "selftext": "You'll probably want to include some kind of general location information here.",
+          "likes": null,
+          "suggested_sort": null,
+          "user_reports": [],
+          "secure_media": null,
+          "link_flair_text": null,
+          "id": "6302cj",
+          "gilded": 0,
+          "secure_media_embed": {},
+          "clicked": false,
+          "score": 21,
+          "report_reasons": null,
+          "author": "aphoenix",
+          "saved": false,
+          "mod_reports": [],
+          "name": "t3_6302cj",
+          "subreddit_name_prefixed": "r/Python",
+          "approved_by": null,
+          "over_18": false,
+          "domain": "self.Python",
+          "hidden": false,
+          "thumbnail": "self",
+          "subreddit_id": "t5_2qh0y",
+          "edited": false,
+          "link_flair_css_class": null,
+          "author_flair_css_class": "",
+          "downs": 0,
+          "brand_safe": true,
+          "archived": false,
+          "removal_reason": null,
+          "is_self": true,
+          "hide_score": false,
+          "spoiler": false,
+          "permalink": "/r/Python/comments/6302cj/rpython_official_job_board/",
+          "num_reports": null,
+          "locked": false,
+          "stickied": true,
+          "created": 1491173962.0,
+          "url": "https://www.reddit.com/r/Python/comments/6302cj/rpython_official_job_board/",
+          "author_flair_text": "reticulated",
+          "quarantine": false,
+          "title": "/r/Python Official Job Board",
+          "created_utc": 1491145162.0,
+          "distinguished": null,
+          "media": null,
+          "num_comments": 3,
+          "visited": false,
+          "subreddit_type": "public",
+          "ups": 21
+        }
+      },
+      {
+        "kind": "t3",
+        "data": {
+          "contest_mode": false,
+          "banned_by": null,
+          "media_embed": {},
+          "subreddit": "Python",
+          "selftext_html": null,
+          "selftext": "",
+          "likes": null,
+          "suggested_sort": null,
+          "user_reports": [],
+          "secure_media": null,
+          "link_flair_text": null,
+          "id": "65mxbw",
+          "gilded": 0,
+          "secure_media_embed": {},
+          "clicked": false,
+          "score": 176,
+          "report_reasons": null,
+          "author": "kwk236",
+          "saved": false,
+          "mod_reports": [],
+          "name": "t3_65mxbw",
+          "subreddit_name_prefixed": "r/Python",
+          "approved_by": null,
+          "over_18": false,
+          "domain": "github.com",
+          "hidden": false,
+          "preview": {
+            "images": [
+              {
+                "source": {
+                  "url": "https://i.redditmedia.com/nnP7Rq8uf045iXrYRdroYhKtP4RSeGfN1PDzkCTuLKE.jpg?s=22b514eb67e6d36e7cec1c1a72db6ebc",
+                  "width": 359,
+                  "height": 359
+                },
+                "resolutions": [
+                  {
+                    "url": "https://i.redditmedia.com/nnP7Rq8uf045iXrYRdroYhKtP4RSeGfN1PDzkCTuLKE.jpg?fit=crop&amp;crop=faces%2Centropy&amp;arh=2&amp;w=108&amp;s=d0a96c16d35dc78eb1de800bb2968d1a",
+                    "width": 108,
+                    "height": 108
+                  },
+                  {
+                    "url": "https://i.redditmedia.com/nnP7Rq8uf045iXrYRdroYhKtP4RSeGfN1PDzkCTuLKE.jpg?fit=crop&amp;crop=faces%2Centropy&amp;arh=2&amp;w=216&amp;s=76e6703250977d6fdf5567f977c2f5b6",
+                    "width": 216,
+                    "height": 216
+                  },
+                  {
+                    "url": "https://i.redditmedia.com/nnP7Rq8uf045iXrYRdroYhKtP4RSeGfN1PDzkCTuLKE.jpg?fit=crop&amp;crop=faces%2Centropy&amp;arh=2&amp;w=320&amp;s=6d879826c98f4c6eb73e293979de07ab",
+                    "width": 320,
+                    "height": 320
+                  }
+                ],
+                "variants": {},
+                "id": "u3DvW_OozPSPEpl2gCQ8CHxfC0jDnpDLipohkkDuKD0"
+              }
+            ],
+            "enabled": false
+          },
+          "thumbnail": "https://b.thumbs.redditmedia.com/gFUs_RTxMYskNOrn7Gs9Aq2eLSCLM3Sna6nrOBuJLUE.jpg",
+          "subreddit_id": "t5_2qh0y",
+          "edited": false,
+          "link_flair_css_class": null,
+          "author_flair_css_class": null,
+          "downs": 0,
+          "brand_safe": true,
+          "archived": false,
+          "removal_reason": null,
+          "post_hint": "link",
+          "is_self": false,
+          "hide_score": false,
+          "spoiler": false,
+          "permalink": "/r/Python/comments/65mxbw/minimal_and_clean_examples_of_data_structures_and/",
+          "num_reports": null,
+          "locked": false,
+          "stickied": false,
+          "created": 1492338250.0,
+          "url": "https://github.com/keon/algorithms",
+          "author_flair_text": null,
+          "quarantine": false,
+          "title": "Minimal and clean examples of data structures and algorithms in Python",
+          "created_utc": 1492309450.0,
+          "distinguished": null,
+          "media": null,
+          "num_comments": 6,
+          "visited": false,
+          "subreddit_type": "public",
+          "ups": 176
+        }
+      }
+    ],
+    "after": "t3_65f2h5",
+    "before": null
+  }
+}

@@ -3,7 +3,7 @@ package sources
 import (
 	"encoding/json"
 	"fmt"
-	shared "github.com/bobo333/sponge/shared"
+	"github.com/bobo333/sponge/shared"
 	"net/http"
 	"time"
 )
@@ -29,9 +29,18 @@ type redditList struct {
 	} `json:"data"`
 }
 
+// UrlMaker is a function that takes a subreddit name and a number of items
+// and returns a URL for that subreddit, properly formatted. This is separated
+// out into a type to make it easier for testing.
+type UrlMaker func(subName string, numItems int) string
+
+func SubredditUrlMaker(subName string, numItems int) string {
+	return fmt.Sprintf("https://www.reddit.com/r/%s/top.json?raw_json=1&t=day&limit=%d", subName, numItems)
+}
+
 // GetReddit retrieves *numItems* from *subName* subreddit, standardizes them,
 // and compiles them into shared.OutputSection.
-func GetReddit(subName string, numItems int) (shared.OutputSection, error) {
+func GetReddit(subName string, numItems int, urlMaker UrlMaker) (shared.OutputSection, error) {
 	redditUsernameEnvName := "REDDIT_USERNAME"
 	redditUsername, envVarErr := shared.GetEnvVar(redditUsernameEnvName)
 	if envVarErr != nil {
@@ -39,7 +48,7 @@ func GetReddit(subName string, numItems int) (shared.OutputSection, error) {
 	}
 
 	userAgent := fmt.Sprintf("golang Sponge:0.0.1 (by /u/%s)", redditUsername)
-	golangListUrl := fmt.Sprintf("https://www.reddit.com/r/%s/top.json?raw_json=1&t=day&limit=%d", subName, numItems)
+	golangListUrl := urlMaker(subName, numItems)
 
 	// TODO: factor out client and json parsing
 	client := &http.Client{Timeout: 10 * time.Second}
